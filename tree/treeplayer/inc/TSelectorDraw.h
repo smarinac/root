@@ -108,8 +108,7 @@ public:
    virtual Double_t *GetV4() const   {return GetVal(3);}
    virtual Double_t *GetW() const    {return fW;}
    virtual Bool_t    Notify();
-   virtual Bool_t    Process(Long64_t /*entry*/) { return kFALSE; }
-   virtual void      ProcessFill(Long64_t entry);
+   virtual Bool_t    Process(Long64_t /*entry*/);
    virtual void      ProcessFillMultiple(Long64_t entry);
    virtual void      ProcessFillObject(Long64_t entry);
    virtual void      SetEstimate(Long64_t n);
@@ -117,6 +116,8 @@ public:
    virtual void      TakeAction();
    virtual void      TakeEstimate();
    virtual void      Terminate();
+
+   int         Version() const { return 2; }
 
    ClassDef(TSelectorDraw,1);  //A specialized TSelector for TTree::Draw
 };

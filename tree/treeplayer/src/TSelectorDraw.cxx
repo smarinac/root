@@ -1131,26 +1131,26 @@ Bool_t TSelectorDraw::Notify()
 }
 
 //______________________________________________________________________________
-void TSelectorDraw::ProcessFill(Long64_t entry)
+Bool_t TSelectorDraw::Process(Long64_t entry)
 {
    // Called in the entry loop for all entries accepted by Select.
 
    if (fObjEval) {
       ProcessFillObject(entry);
-      return;
+      return kTRUE;
    }
 
    if (fMultiplicity) {
       ProcessFillMultiple(entry);
-      return;
+      return kTRUE;
    }
 
    // simple case with no multiplicity
-   if (fForceRead && fManager->GetNdata() <= 0) return;
+   if (fForceRead && fManager->GetNdata() <= 0) return kTRUE;
 
    if (fSelect) {
       fW[fNfill] = fWeight * fSelect->EvalInstance(0);
-      if (!fW[fNfill]) return;
+      if (!fW[fNfill]) return kTRUE;
    } else fW[fNfill] = fWeight;
    if (fVal) {
       for (Int_t i = 0; i < fDimension; ++i) {
@@ -1162,6 +1162,8 @@ void TSelectorDraw::ProcessFill(Long64_t entry)
       TakeAction();
       fNfill = 0;
    }
+   // Done
+   return kTRUE;
 }
 
 //______________________________________________________________________________
