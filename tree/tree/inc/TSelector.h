@@ -41,9 +41,10 @@ class TSelector : public TObject {
 public:
    enum EAbort { kContinue, kAbortProcess, kAbortFile };
 
-    enum EStatusBits {
-      kIsProof         = BIT(16)
-         };
+   enum EStatusBits {
+      kIsInitialized  = BIT(14),
+      kIsProof        = BIT(15)
+   };
 
 protected:
    Long64_t       fStatus;  // Selector status
