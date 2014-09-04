@@ -81,6 +81,9 @@ TSelectorDraw::TSelectorDraw()
    fWeight         = 1;
    fCurrentSubEntry = -1;
    fTreeElistArray  = 0;
+
+   ResetBit(TSelector::kIsInitialized);
+   ResetBit(TSelector::kIsProof);
 }
 
 //______________________________________________________________________________
@@ -103,15 +106,42 @@ TSelectorDraw::~TSelectorDraw()
 }
 
 //______________________________________________________________________________
-void TSelectorDraw::Begin(TTree *tree)
+void TSelectorDraw::Init(TTree *tree)
+{
+   // Called everytime a new file is open (by PROOF)
+   
+   InitVar(tree);
+
+   if (tree) {
+      fTree = tree;
+      for (Int_t i = 0; i < fDimension; ++i) {
+         if (fVar[i]) fVar[i]->SetTree(tree);
+      }
+      if (fSelect) fSelect->SetTree(tree);
+   }
+}
+
+//______________________________________________________________________________
+void TSelectorDraw::InitVar(TTree *tree)
 {
    // Called everytime a loop on the tree(s) starts.
+
+   if (TestBit(TSelector::kIsInitialized)) return;
+   SetBit(TSelector::kIsInitialized);
 
    SetStatus(0);
    ResetAbort();
    ResetBit(kCustomHistogram);
    fSelectedRows   = 0;
-   fTree = tree;
+   if (tree) {
+      fTree = tree;
+   } else {
+      TNamed *tn = (TNamed *) fInput->FindObject("treename");
+   if (tn) {
+      fTree = (TTree *) fInput->FindObject(tn->GetTitle());
+      }
+   }
+
    fDimension = 0;
    fAction = 0;
 
@@ -1499,14 +1529,16 @@ void TSelectorDraw::TakeAction()
       TakeEstimate();
    }
 
-   // Do we need to update screen?
    fSelectedRows += fNfill;
-   if (!fTree->GetUpdate()) return;
-   if (fSelectedRows > fDraw + fTree->GetUpdate()) {
-      if (fDraw) gPad->Modified();
-      else       fObject->Draw(fOption.Data());
-      gPad->Update();
-      fDraw = fSelectedRows;
+   // Do we need to update screen?
+   if (!TestBit(TSelector::kIsProof)) {
+      if (!fTree->GetUpdate()) return;
+      if (fSelectedRows > fDraw + fTree->GetUpdate()) {
+         if (fDraw) gPad->Modified();
+         else       fObject->Draw(fOption.Data());
+         gPad->Update();
+         fDraw = fSelectedRows;
+      }
    }
 }
 
@@ -1782,11 +1814,19 @@ void TSelectorDraw::TakeEstimate()
 }
 
 //______________________________________________________________________________
-void TSelectorDraw::Terminate()
+void TSelectorDraw::SlaveTerminate()
 {
    // Called at the end of a loop on a TTree.
 
    if (fNfill) TakeAction();
+
+   fOutput->Add(fObject->Clone());
+}
+
+//______________________________________________________________________________
+void TSelectorDraw::Terminate()
+{
+   // Called at the end of a loop on a TTree.
 
    if ((fSelectedRows == 0) && (TestBit(kCustomHistogram) == 0)) fDraw = 1; // do not draw
 

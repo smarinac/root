@@ -2112,6 +2112,10 @@ Long64_t TTreePlayer::Process(TSelector *selector,Option_t *option, Long64_t nen
 
    fTree->SetNotify(selector);
 
+   selector->ResetBit(TSelector::kIsInitialized);
+
+   if (selector->GetOutputList()) selector->GetOutputList()->Clear();
+
    selector->SetOption(option);
 
    selector->Begin(fTree);       //<===call user initialization function
