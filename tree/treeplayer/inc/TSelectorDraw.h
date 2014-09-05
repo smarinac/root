@@ -44,6 +44,7 @@ protected:
    TH1           *fOldHistogram;   //! Pointer to previously used histogram
    Int_t          fAction;         //! Action type
    Long64_t       fDraw;           //! Last entry loop number when object was drawn
+   Int_t          fUpdate;         //! Update frequency for the TTree entry loop
    Int_t          fNfill;          //! Total number of histogram fills
    Int_t          fMultiplicity;   //  Indicator of the variability of the size of entries
    Int_t          fDimension;      //  Dimension of the current expression

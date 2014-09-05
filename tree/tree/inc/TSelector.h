@@ -42,8 +42,7 @@ public:
    enum EAbort { kContinue, kAbortProcess, kAbortFile };
 
    enum EStatusBits {
-      kIsInitialized  = BIT(14),
-      kIsProof        = BIT(15)
+      kIsInitialized  = BIT(14)
    };
 
 protected:

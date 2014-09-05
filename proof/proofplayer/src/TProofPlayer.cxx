@@ -1464,7 +1464,6 @@ Long64_t TProofPlayer::Process(TDSet *dset, const char *selector_file,
             PDB(kLoop,1) Info("Process","Call Terminate()");
             fSelector->Terminate();
          } else {
-            fSelector->SetBit(TSelector::kIsProof);
             PDB(kLoop,1) Info("Process","Call SlaveTerminate()");
             fSelector->SlaveTerminate();
             if (IsClient() && !fSelStatus->TestBit(TStatus::kNotOk)) {

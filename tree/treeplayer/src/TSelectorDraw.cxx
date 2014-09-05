@@ -67,6 +67,7 @@ TSelectorDraw::TSelectorDraw()
    fSelect         = 0;
    fSelectedRows   = 0;
    fDraw           = 0;
+   fUpdate         = 0;
    fObject         = 0;
    fOldHistogram   = 0;
    fObjEval        = kFALSE;
@@ -83,7 +84,6 @@ TSelectorDraw::TSelectorDraw()
    fTreeElistArray  = 0;
 
    ResetBit(TSelector::kIsInitialized);
-   ResetBit(TSelector::kIsProof);
 }
 
 //______________________________________________________________________________
@@ -137,13 +137,18 @@ void TSelectorDraw::InitVar(TTree *tree)
       fTree = tree;
    } else {
       TNamed *tn = (TNamed *) fInput->FindObject("treename");
-   if (tn) {
-      fTree = (TTree *) fInput->FindObject(tn->GetTitle());
+      if (tn) {
+         fTree = (TTree *) fInput->FindObject(tn->GetTitle());
       }
+   }
+   if (!fTree) {
+      Abort("No TTree defined!");
+      return;
    }
 
    fDimension = 0;
    fAction = 0;
+   fUpdate = fTree->GetUpdate();
 
    TObject *obj = fInput->FindObject("varexp");
    const char *varexp0   = obj ? obj->GetTitle() : "";
@@ -1531,14 +1536,12 @@ void TSelectorDraw::TakeAction()
 
    fSelectedRows += fNfill;
    // Do we need to update screen?
-   if (!TestBit(TSelector::kIsProof)) {
-      if (!fTree->GetUpdate()) return;
-      if (fSelectedRows > fDraw + fTree->GetUpdate()) {
-         if (fDraw) gPad->Modified();
-         else       fObject->Draw(fOption.Data());
-         gPad->Update();
-         fDraw = fSelectedRows;
-      }
+   if (!fUpdate) return;
+   if (fSelectedRows > fDraw + fUpdate) {
+      if (fDraw) gPad->Modified();
+      else       fObject->Draw(fOption.Data());
+      gPad->Update();
+      fDraw = fSelectedRows;
    }
 }
 
