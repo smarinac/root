@@ -70,6 +70,7 @@ TSelectorDraw::TSelectorDraw()
    fUpdate         = 0;
    fObject         = 0;
    fOldHistogram   = 0;
+   fHKeep          = kFALSE;
    fObjEval        = kFALSE;
    fSelectMultiple = kFALSE;
    fCleanElist     = kFALSE;
@@ -84,6 +85,7 @@ TSelectorDraw::TSelectorDraw()
    fTreeElistArray  = 0;
 
    ResetBit(TSelector::kIsInitialized);
+   TH1::AddDirectory(kFALSE);
 }
 
 //______________________________________________________________________________
@@ -103,6 +105,7 @@ TSelectorDraw::~TSelectorDraw()
    if (fNbins) delete [] fNbins;
    if (fVarMultiple) delete [] fVarMultiple;
    if (fW)     delete [] fW;
+   TH1::AddDirectory(kTRUE);
 }
 
 //______________________________________________________________________________
@@ -159,7 +162,7 @@ void TSelectorDraw::InitVar(TTree *tree)
    TString  opt, abrt;
    char *hdefault = (char *)"htemp";
    char *varexp;
-   Int_t i, j, hkeep;
+   Int_t i, j;
    opt = option;
    opt.ToLower();
    fOldHistogram = 0;
@@ -223,7 +226,6 @@ void TSelectorDraw::InitVar(TTree *tree)
    // what each variable should contain:
    //   varexp0   - original expression eg "a:b>>htest"
    //   hname     - name of new or old histogram
-   //   hkeep     - flag if to keep new histogram
    //   hnameplus - flag if to add to current histo
    //   i         - length of variable expression stipped of everything after ">>"
    //   varexp    - variable expression stipped of everything after ">>"
@@ -251,9 +253,10 @@ void TSelectorDraw::InitVar(TTree *tree)
          }
       }
    }
+   fHName = hname;
    //   char *hname = (char*)strstr(varexp0,">>");
    if (hname) {
-      hkeep  = 1;
+      fHKeep  = kTRUE;
       varexp = new char[i+1];
       varexp[0] = 0; //necessary if i=0
       Bool_t hnameplus = kFALSE;
@@ -502,7 +505,7 @@ void TSelectorDraw::InitVar(TTree *tree)
       }  // if (i)
    } else { // if (hname)
       hname  = hdefault;
-      hkeep  = 0;
+      fHKeep  = kFALSE;
       const size_t varexpLen = strlen(varexp0) + 1;
       varexp = new char[varexpLen];
       strlcpy(varexp, varexp0, varexpLen);
@@ -610,7 +613,7 @@ void TSelectorDraw::InitVar(TTree *tree)
          hist->SetMarkerColor(fTree->GetMarkerColor());
          hist->SetMarkerSize(fTree->GetMarkerSize());
          if (canRebin)hist->SetBit(TH1::kCanRebin);
-         if (!hkeep) {
+         if (!fHKeep) {
             hist->GetXaxis()->SetTitle(fVar[0]->GetTitle());
             hist->SetBit(kCanDelete);
             if (!opt.Contains("goff")) hist->SetDirectory(0);
@@ -684,7 +687,7 @@ void TSelectorDraw::InitVar(TTree *tree)
             } else {
                hp = new TProfile(hname, htitle.Data(), fNbins[1], fVmin[1], fVmax[1], "");
             }
-            if (!hkeep) {
+            if (!fHKeep) {
                hp->SetBit(kCanDelete);
                if (!opt.Contains("goff")) hp->SetDirectory(0);
             }
@@ -716,7 +719,7 @@ void TSelectorDraw::InitVar(TTree *tree)
             h2->SetMarkerColor(fTree->GetMarkerColor());
             h2->SetMarkerSize(fTree->GetMarkerSize());
             if (canRebin)h2->SetBit(TH1::kCanRebin);
-            if (!hkeep) {
+            if (!fHKeep) {
                h2->GetXaxis()->SetTitle(fVar[1]->GetTitle());
                h2->GetYaxis()->SetTitle(fVar[0]->GetTitle());
                h2->SetBit(TH1::kNoStats);
@@ -822,7 +825,7 @@ void TSelectorDraw::InitVar(TTree *tree)
             } else {
                hp = new TProfile2D(hname, htitle.Data(), fNbins[2], fVmin[2], fVmax[2], fNbins[1], fVmin[1], fVmax[1], "");
             }
-            if (!hkeep) {
+            if (!fHKeep) {
                hp->SetBit(kCanDelete);
                if (!opt.Contains("goff")) hp->SetDirectory(0);
             }
@@ -854,7 +857,7 @@ void TSelectorDraw::InitVar(TTree *tree)
             h2->SetMarkerColor(fTree->GetMarkerColor());
             h2->SetMarkerSize(fTree->GetMarkerSize());
             if (canRebin)h2->SetBit(TH1::kCanRebin);
-            if (!hkeep) {
+            if (!fHKeep) {
                h2->GetXaxis()->SetTitle(fVar[1]->GetTitle());
                h2->GetZaxis()->SetTitle(fVar[0]->GetTitle());
                h2->SetBit(TH1::kNoStats);
@@ -881,7 +884,7 @@ void TSelectorDraw::InitVar(TTree *tree)
             h3->SetMarkerColor(fTree->GetMarkerColor());
             h3->SetMarkerSize(fTree->GetMarkerSize());
             if (canRebin)h3->SetBit(TH1::kCanRebin);
-            if (!hkeep) {
+            if (!fHKeep) {
                //small correction for the title offsets in x,y to take into account the angles
                Double_t xoffset = h3->GetXaxis()->GetTitleOffset();
                Double_t yoffset = h3->GetYaxis()->GetTitleOffset();
@@ -922,7 +925,7 @@ void TSelectorDraw::InitVar(TTree *tree)
       else if (opt5d) fAction = 8;
       else            fAction = 6;
    }
-   if (hkeep) delete [] varexp;
+   if (fHKeep) delete [] varexp;
    if (hnamealloc) delete [] hnamealloc;
    for (i = 0; i < fValSize; ++i)
       fVarMultiple[i] = kFALSE;
@@ -1834,4 +1837,16 @@ void TSelectorDraw::Terminate()
    if ((fSelectedRows == 0) && (TestBit(kCustomHistogram) == 0)) fDraw = 1; // do not draw
 
    SetStatus(fSelectedRows);
+
+   if (fHKeep) {
+      // Transfer object into gDirectory if required
+      TObject *o = fOutput->FindObject(fHName);
+      if (o) {
+         gDirectory->Add(o);
+         fOutput->Remove(o);
+         // Info("Terminate", "object '%s' transferred to gDirectory", fHName.Data());
+      } else {
+         Error("Terminate", "requested object '%s' not found in the output list", fHName.Data());
+      }
+   } 
 }

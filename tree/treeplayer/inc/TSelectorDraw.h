@@ -42,6 +42,8 @@ protected:
    TObject       *fTreeElist;      //  pointer to Tree Event list
    TEntryListArray *fTreeElistArray;   //!  pointer to Tree Event list array
    TH1           *fOldHistogram;   //! Pointer to previously used histogram
+   Bool_t         fHKeep;          //! Whether to keep the created object in gDirectory
+   TString        fHName;          //! Name of created object
    Int_t          fAction;         //! Action type
    Long64_t       fDraw;           //! Last entry loop number when object was drawn
    Int_t          fUpdate;         //! Update frequency for the TTree entry loop
